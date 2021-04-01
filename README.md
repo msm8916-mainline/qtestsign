@@ -11,8 +11,9 @@ it does not even generate an actual signature because it does not seem to be ver
 MSM8916/APQ8016 devices with disabled secure boot.
 
 ## Usage
-[qtestsign] requires Python 3.7+ and [cryptography], a Python module used to generate new CA certificates.
-On many distributions this will likely be already installed by default, alternatively you can install it with pip:
+[qtestsign] requires Python 3.7+ and [cryptography] 3.1+, a Python module used to generate new CA certificates.
+On many distributions this will likely be already installed by default (but perhaps outdated).
+Alternatively you can install it with pip:
 
 ```
 $ pip install -r requirements.txt
