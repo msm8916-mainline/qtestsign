@@ -37,7 +37,8 @@ It is likely that it works for many other SoCs that use the [v1.0 image format].
 This tool was created to sign (open-source) firmware for the [DragonBoard 410c] (APQ8016) and other MSM8916 devices, e.g.:
 - `aboot`: [LK (Little Kernel)] bootloader
 - `aboot`: [U-Boot] bootloader
-- `hyp`: [qhypstub]
+- `hyp`: [qhypstub], [tfalkstub]
+- `tz`: [Trusted Firmware-ARM (TF-A)]
 
 ## License
 [qtestsign] is licensed under the [GNU General Public License, version 2]. It is mostly based on the specification
@@ -49,7 +50,9 @@ from [signlk]. Unlike [signlk] it can also successfully sign other firmware type
 [v1.0 image format]: https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf
 [DragonBoard 410c]: https://www.96boards.org/product/dragonboard410c/
 [LK (Little Kernel)]: https://git.linaro.org/landing-teams/working/qualcomm/lk.git
-[U-Boot]: https://www.denx.de/wiki/U-Boot
+[U-Boot]: https://u-boot.readthedocs.io/en/latest/board/qualcomm/dragonboard410c.html
 [qhypstub]: https://github.com/msm8916-mainline/qhypstub
+[tfalkstub]: https://github.com/msm8916-mainline/tfalkstub
+[Trusted Firmware-ARM (TF-A)]: https://trustedfirmware-a.readthedocs.io/en/latest/plat/qti-msm8916.html
 [GNU General Public License, version 2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 [signlk]: https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
