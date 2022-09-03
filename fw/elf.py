@@ -130,13 +130,18 @@ def _pad(f: BinaryIO, offset: int, pos: int) -> int:
 	return offset
 
 
+def _align(i: int, alignment: int) -> int:
+	mask = max(alignment - 1, 0)
+	return (i + mask) & ~mask
+
+
 @dataclass
 class Elf:
 	ehdr: Ehdr
 	phdrs: List[Phdr]
 
-	def total_header_size(self, extra_phdrs=0):
-		return self.ehdr.e_phoff + (len(self.phdrs) + extra_phdrs) * self.ehdr.e_phentsize
+	def total_header_size(self):
+		return self.ehdr.e_phoff + len(self.phdrs) * self.ehdr.e_phentsize
 
 	@staticmethod
 	def parse(b: bytes) -> Elf:
@@ -159,6 +164,13 @@ class Elf:
 		return Elf(ehdr, phdrs)
 
 	def update(self):
+		# Rearrange all segments according to their alignment
+		pos = self.total_header_size()
+		for phdr in sorted(self.phdrs, key=lambda phdr: phdr.p_offset):
+			if phdr.p_offset and phdr.p_filesz:
+				phdr.p_offset = _align(pos, phdr.p_align)
+				pos = phdr.p_offset + phdr.p_filesz
+
 		# Ensure program header count is correct
 		self.ehdr.e_phnum = len(self.phdrs)
 

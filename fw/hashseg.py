@@ -252,18 +252,8 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 	hash_seg.update(hash_addr)
 	print(hash_seg)
 
-	# Place hash segment at first possible location respecting space for program headers + alignment
-	hash_start = _align(elff.total_header_size(EXTRA_PHDRS), HASH_SEG_ALIGN)
-	pos = hash_start + hash_seg.size_with_header
-
-	# Rearrange all segments according to their alignment
-	for phdr in sorted(elff.phdrs, key=lambda phdr: phdr.p_offset):
-		if phdr.p_offset and phdr.p_filesz:
-			phdr.p_offset = _align(pos, phdr.p_align)
-			pos = phdr.p_offset + phdr.p_filesz
-
 	# Insert new hash NULL segment
-	hash_phdr = elf.Phdr(0, hash_start, hash_addr, hash_addr, hash_seg.size_with_header,
+	hash_phdr = elf.Phdr(0, HASH_SEG_ALIGN, hash_addr, hash_addr, hash_seg.size_with_header,
 						 _align(hash_seg.size_with_header, HASH_SEG_ALIGN),
 						 PHDR_FLAGS_HASH_SEGMENT, HASH_SEG_ALIGN)
 	elff.phdrs.insert(0, hash_phdr)
