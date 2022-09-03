@@ -65,6 +65,15 @@ building open-source firmware projects without access to Qualcomm's tool, e.g.:
 [qtestsign] also accepts already signed firmware as input. In this case, the original hash segment/signature
 is stripped and replaced with new hashes.
 
+## Extra Tools
+[qtestsign] also provides some extra tools for working with (Qualcomm-related) ELF images:
+
+  - `merge.py`: Merge program headers and segments from multiple ELF files into a single ELF image.
+    This can be used if multiple separate firmware images should be loaded at runtime, but only
+    a limited amount of firmware partitions (`tz`, `hyp`, ...) are available.
+
+    **Note:** The resulting image is not automatically signed, this must be done separately.
+
 ## License
 [qtestsign] is licensed under the [GNU General Public License, version 2]. It is mostly based on the specification
 from Qualcomm's whitepaper _"Secure Boot and Image Authentication"_ (both
