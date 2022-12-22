@@ -74,6 +74,8 @@ is stripped and replaced with new hashes.
 
     **Note:** The resulting image is not automatically signed, this must be done separately.
 
+ - `strip.py`: Remove section header table and drop hash segment from the ELF image.
+
 ## License
 [qtestsign] is licensed under the [GNU General Public License, version 2]. It is mostly based on the specification
 from Qualcomm's whitepaper _"Secure Boot and Image Authentication"_ (both

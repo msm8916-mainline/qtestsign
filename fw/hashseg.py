@@ -198,10 +198,14 @@ HashSegment = {
 }
 
 
-def generate(elff: elf.Elf, version: int, sw_id: int):
+def drop(elff: elf.Elf):
 	# Drop existing hash segments
 	elff.phdrs = [phdr for phdr in elff.phdrs if phdr.p_type != 0 or phdr.p_flags not in
 				  [PHDR_FLAGS_HASH_SEGMENT, PHDR_FLAGS_HDR_PLACEHOLDER]]
+
+
+def generate(elff: elf.Elf, version: int, sw_id: int):
+	drop(elff)
 	assert elff.phdrs, "Need at least one program header"
 
 	hash_seg = HashSegment[version]()
