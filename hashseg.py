@@ -4,7 +4,9 @@
 #   - signlk: https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
 #   - coreboot (util/qualcomm/mbn_tools.py)
 # Copyright (c) 2016, 2018, The Linux Foundation. All rights reserved. (BSD-3-Clause)
-# See: https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf
+# See also:
+#   - https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf
+#   - https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v2-0.pdf
 from __future__ import annotations
 
 import dataclasses
@@ -51,8 +53,9 @@ EXTRA_PHDRS = 2  # header placeholder + hash segment
 HASH_SEG_ALIGN = 0x1000
 CERT_CHAIN_ALIGN = 16
 
-SHA256_SIZE = 32
-SHA256_EMPTY = b'\0' * SHA256_SIZE
+# According to the v2.0 PDF the metadata is 128 bytes long, but this does not
+# seem to work. All official firmware seems to use 120 bytes instead.
+METADATA_SIZE = 120
 
 
 def _align(i: int, alignment: int) -> int:
@@ -75,19 +78,20 @@ class _HashSegment:
 	cert_chain = b''
 
 	FORMAT = Struct('<10L')
+	Hash = hashlib.sha256
 
 	@property
 	def size_with_header(self):
 		return self.FORMAT.size + self.total_size
 
 	def update(self, dest_addr: int):
-		self.hash_size = len(self.hashes) * SHA256_SIZE
+		self.hash_size = len(self.hashes) * self.Hash().digest_size
 		self.signature_size = len(self.signature)
 		self.cert_chain_size = len(self.cert_chain)
 		self.total_size = self.hash_size + self.signature_size + self.cert_chain_size
 
 	def check(self):
-		assert len(self.hashes) * SHA256_SIZE == self.hash_size
+		assert len(self.hashes) * self.Hash().digest_size == self.hash_size
 		assert len(self.signature) == self.signature_size
 		assert len(self.cert_chain) == self.cert_chain_size
 
@@ -155,9 +159,42 @@ class HashSegmentV5(_HashSegment):
 			+ self.signature + self.cert_chain
 
 
+@dataclass
+class HashSegmentV6(HashSegmentV5):
+	version: int = 6  # Header version number
+
+	metadata_size_qcom: int = 0  # Size of metadata from Qualcomm
+	metadata_size: int = 0  # Size of metadata
+
+	metadata_qcom = b''
+	metadata = b''
+
+	FORMAT = Struct('<12L')
+	Hash = hashlib.sha384
+
+	def update(self, dest_addr: int):
+		super().update(dest_addr)
+		self.metadata_size_qcom = len(self.metadata_qcom)
+		self.metadata_size = len(self.metadata)
+		self.total_size += self.metadata_size_qcom + self.metadata_size
+
+	def check(self):
+		super().check()
+		assert len(self.metadata_qcom) == self.metadata_size_qcom
+		assert len(self.metadata) == self.metadata_size
+
+	def pack(self):
+		return self.pack_header() \
+			+ self.metadata_qcom + self.metadata \
+			+ b''.join(self.hashes) \
+			+ self.signature_qcom + self.cert_chain_qcom \
+			+ self.signature + self.cert_chain
+
+
 HashSegment = {
 	3: HashSegmentV3,
 	5: HashSegmentV5,
+	6: HashSegmentV6,
 }
 
 
@@ -169,12 +206,17 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 
 	hash_seg = HashSegment[version]()
 
-	# Generate SHA256 hash for all existing segments with data
-	hash_seg.hashes = [SHA256_EMPTY] * (len(elff.phdrs) + EXTRA_PHDRS)
+	if version >= 6:
+		# TODO: Figure out metadata format and fill this with useful data
+		hash_seg.metadata = b'\0' * METADATA_SIZE
+
+	# Generate hash for all existing segments with data
+	digest_size = hash_seg.Hash().digest_size
+	hash_seg.hashes = [b'\0' * digest_size] * (len(elff.phdrs) + EXTRA_PHDRS)
 	for i, phdr in enumerate(elff.phdrs, start=EXTRA_PHDRS):
 		if phdr.data:
-			hash_seg.hashes[i] = hashlib.sha256(phdr.data).digest()
-	total_hashes_size = len(hash_seg.hashes) * SHA256_SIZE
+			hash_seg.hashes[i] = hash_seg.Hash(phdr.data).digest()
+	total_hashes_size = len(hash_seg.hashes) * digest_size
 
 	# Generate certificate chain with specified sw_id, and pad it to alignment (not sure why)
 	hash_seg.cert_chain = sign.generate_cert_chain(sw_id, hash_seg.FORMAT.size + total_hashes_size)
@@ -223,7 +265,7 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 	# Compute the hash for the ELF header
 	with BytesIO() as hdr_io:
 		elff.save_header(hdr_io)
-		hashes[0] = hashlib.sha256(hdr_io.getbuffer()).digest()
+		hash_seg.hashes[0] = hash_seg.Hash(hdr_io.getbuffer()).digest()
 
 	# And finally, assemble the hash segment
 	hash_phdr.data = hash_seg.pack()
