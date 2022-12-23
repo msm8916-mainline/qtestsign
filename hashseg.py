@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-only AND BSD-3-Clause
 # Copyright (C) 2021-2022 Stephan Gerhold (GPL-2.0-only)
-# Header format taken from https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
-# Copyright (c) 2016, The Linux Foundation. All rights reserved. (BSD-3-Clause)
+# MBN header format adapted from:
+#   - signlk: https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
+#   - coreboot (util/qualcomm/mbn_tools.py)
+# Copyright (c) 2016, 2018, The Linux Foundation. All rights reserved. (BSD-3-Clause)
 # See: https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf
 from __future__ import annotations
 
@@ -60,12 +62,12 @@ def _align(i: int, alignment: int) -> int:
 
 @dataclass
 class Header:
+	image_id: int  # Type of image (unused?)
 	version: int  # Header version number
-	type: int  # Type of "image" (always 0x3?)
-	flash_addr: int  # Location of image in flash (always 0?)
+	flash_addr: int  # Location of image in flash (historical)
 	dest_addr: int  # Physical address of loaded hash segment data
-	total_size: int  # = code_size + signature_size + cert_chain_size
-	hash_size: int  # Size of SHA256 hashes for each program segment
+	total_size: int  # = hash_size + signature_size + cert_chain_size
+	hash_size: int  # Size of hashes for all program segments
 	signature_addr: int  # Physical address of loaded attestation signature
 	signature_size: int  # Size of attestation signature
 	cert_chain_addr: int  # Physical address of loaded certificate chain
@@ -74,8 +76,8 @@ class Header:
 	FORMAT = Struct('<10L')
 
 	def __init__(self, dest_addr: int, hash_size: int, signature_size: int, cert_chain_size: int):
-		self.version = 0
-		self.type = 0x3
+		self.image_id = 0
+		self.version = 3
 		self.flash_addr = 0
 		self.dest_addr = dest_addr + Header.FORMAT.size
 		self.total_size = hash_size + signature_size + cert_chain_size

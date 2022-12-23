@@ -43,7 +43,8 @@ This tool was created to sign (open-source) firmware for the [DragonBoard 410c] 
 ## License
 [qtestsign] is licensed under the [GNU General Public License, version 2]. It is mostly based on the specification
 of the [v1.0 image format], but some implementation details (e.g. the exact hash segment header format) are adapted
-from [signlk]. Unlike [signlk] it can also successfully sign other firmware types, like `hyp`.
+from [signlk] and [coreboot] (`util/qualcomm/mbn_tools.py`). Unlike [signlk] and coreboot it can also successfully
+sign most other firmware types (like `hyp`).
 
 [qtestsign]: https://github.com/msm8916-mainline/qtestsign
 [cryptography]: https://cryptography.io
@@ -56,3 +57,4 @@ from [signlk]. Unlike [signlk] it can also successfully sign other firmware type
 [Trusted Firmware-ARM (TF-A)]: https://trustedfirmware-a.readthedocs.io/en/latest/plat/qti-msm8916.html
 [GNU General Public License, version 2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 [signlk]: https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
+[coreboot]: https://coreboot.org
