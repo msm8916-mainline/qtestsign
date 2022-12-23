@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-only
-# Copyright (C) 2021 Stephan Gerhold
+# Copyright (C) 2021-2022 Stephan Gerhold
 from __future__ import annotations
 
 import argparse
@@ -28,11 +28,11 @@ FW_SW_ID = {
 }
 
 
-def _sign_elf(b: bytes, out: Path, sw_id: int):
+def _sign_elf(b: bytes, out: Path, version: int, sw_id: int):
 	elf = Elf.parse(b)
 
 	print(f"Before: {elf}")
-	hashseg.generate(elf, sw_id)
+	hashseg.generate(elf, version, sw_id)
 	print(f"After: {elf}")
 
 	with open(out, 'wb') as f:
@@ -47,6 +47,7 @@ parser = argparse.ArgumentParser(description="""
 """)
 parser.add_argument('type', choices=FW_SW_ID.keys(), help="Firmware type (for SW_ID)")
 parser.add_argument('elf', type=argparse.FileType('rb'), help="ELF image to sign")
+parser.add_argument('-v', '--version', type=int, choices=[3, 5], default=3, help="MBN header version")
 parser.add_argument('-o', '--output', type=Path, help="Output file")
 args = parser.parse_args()
 
@@ -58,4 +59,4 @@ if not out:
 	elf_path = Path(args.elf.name)
 	out = elf_path.with_name(elf_path.stem + "-test-signed.mbn")
 
-_sign_elf(elf_bytes, out, FW_SW_ID[args.type])
+_sign_elf(elf_bytes, out, args.version, FW_SW_ID[args.type])
