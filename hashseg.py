@@ -122,7 +122,7 @@ def generate(elff: elf.Elf, sw_id: int):
 	# RSASSA-PSS, ECDSA over P-384) but it's not entirely clear yet which chipsets supports/
 	# uses which. The signature does not seem to be checked on devices without secure boot,
 	# so just use a dummy value for now.
-	signature = b'\xff' * (sign.KEY_BITS // 8)
+	signature = b'\xff' * (sign.ATT_KEY.key_size // 8)
 
 	# Align maximum end address to get address for hash table header, then generate header
 	hash_addr = _align(max(phdr.p_paddr + phdr.p_memsz for phdr in elff.phdrs), HASH_SEG_ALIGN)
