@@ -110,9 +110,10 @@ def generate(elff: elf.Elf, sw_id: int):
 	for i, phdr in enumerate(elff.phdrs, start=EXTRA_PHDRS):
 		if phdr.data:
 			hashes[i] = hashlib.sha256(phdr.data).digest()
+	total_hashes_size = len(hashes) * SHA256_SIZE
 
 	# Generate certificate chain with specified sw_id, and pad it to alignment (not sure why)
-	cert_chain = sign.generate_cert_chain(sw_id)
+	cert_chain = sign.generate_cert_chain(sw_id, MbnHeader.FORMAT.size + total_hashes_size)
 	cert_chain = cert_chain.ljust(_align(len(cert_chain), CERT_CHAIN_ALIGN), b'\xff')
 	# cert_chain = b'\00' * CERT_CHAIN_ALIGN  # can be used for testing
 
@@ -125,7 +126,7 @@ def generate(elff: elf.Elf, sw_id: int):
 
 	# Align maximum end address to get address for hash table header, then generate header
 	hash_addr = _align(max(phdr.p_paddr + phdr.p_memsz for phdr in elff.phdrs), HASH_SEG_ALIGN)
-	hash_header = Header(hash_addr, len(hashes) * SHA256_SIZE, len(signature), len(cert_chain))
+	hash_header = Header(hash_addr, total_hashes_size, len(signature), len(cert_chain))
 	print(hash_header)
 
 	# Place hash segment at first possible location respecting space for program headers + alignment
