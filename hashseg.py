@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only AND BSD-3-Clause
-# Copyright (C) 2021 Stephan Gerhold (GPL-2.0-only)
+# Copyright (C) 2021-2022 Stephan Gerhold (GPL-2.0-only)
 # Header format taken from https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
 # Copyright (c) 2016, The Linux Foundation. All rights reserved. (BSD-3-Clause)
 # See: https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf
@@ -14,37 +14,30 @@ from struct import Struct
 import elf
 import sign
 
-# https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf
-# is a good overview for the signed image format, but it's basically missing
-# an intuition for the additional ELF program headers added to the ELF image.
-#
 # A typical Qualcomm firmware might have the following program headers:
-#     LOAD off    0x0000000000000800 vaddr 0x0000000086400000 paddr 0x0000000086400000 align 2**11
-#          filesz 0x0000000000001000 memsz 0x0000000000001000 flags rwx
+#     LOAD off    0x00000800 vaddr 0x86400000 paddr 0x86400000 align 2**11
+#          filesz 0x00001000 memsz 0x00001000 flags rwx
 #
 # The signed version will then look like:
-#     NULL off    0x0000000000000000 vaddr 0x0000000000000000 paddr 0x0000000000000000 align 2**0
-#          filesz 0x00000000000000e8 memsz 0x0000000000000000 flags --- 7000000
-#     NULL off    0x0000000000001000 vaddr 0x0000000086401000 paddr 0x0000000086401000 align 2**12
-#          filesz 0x0000000000000988 memsz 0x0000000000001000 flags --- 2200000
-#     LOAD off    0x0000000000002000 vaddr 0x0000000086400000 paddr 0x0000000086400000 align 2**11
-#          filesz 0x0000000000001000 memsz 0x0000000000001000 flags rwx
+#     NULL off    0x00000000 vaddr 0x00000000 paddr 0x00000000 align 2**0
+#          filesz 0x000000e8 memsz 0x00000000 flags --- 7000000
+#     NULL off    0x00001000 vaddr 0x86401000 paddr 0x86401000 align 2**12
+#          filesz 0x00000988 memsz 0x00001000 flags --- 2200000
+#     LOAD off    0x00002000 vaddr 0x86400000 paddr 0x86400000 align 2**11
+#          filesz 0x00001000 memsz 0x00001000 flags rwx
 #
 # The second NULL program header with off 0x1000 and filesz 0x988 is the actual
 # "hash table segment" or shortly "hash segment" (see Figure 2 on page 6 in the PDF).
-# It contains the header specified below, then a couple of SHA256 hashes:
+# It contains the MBN header specified below, then a couple of hashes (e.g. SHA256):
 #   1. Hash of ELF header and program headers
 #   2. Empty hash for hash segment
 #   3. Hashes for data of each memory segment (described by program header)
 # Finally, it contains an RSA signature and the concatenated certificate chain.
 #
-# So what's the reason for the first NULL program header? It's not loaded anywhere,
-# because vaddr = paddr = memsz = 0. But actually, the "off" and "filesz" suggest
-# that it covers exactly the ELF header (including all program headers).
-# So an intuition here is that we can simplify the definition of the hashes
-# in the hash segment to be just "a SHA256 hash for the data of each of
-# the program headers, with the one for the hash segment kept empty". There is
-# no need to special case the hash for the ELF header + program headers anymore.
+# The first NULL program header is never loaded anywhere, because
+# vaddr = paddr = memsz = 0. However, the "off" and "filesz" cover exactly
+# the ELF header (including all program headers). It is a placeholder so that
+# each hash covers the data of exactly one program header.
 
 PHDR_FLAGS_HDR_PLACEHOLDER = 0x7000000  # placeholder for hash over ELF header
 PHDR_FLAGS_HASH_SEGMENT = 0x2200000  # hash table segment
@@ -124,9 +117,10 @@ def generate(elff: elf.Elf, sw_id: int):
 	# cert_chain = b'\00' * CERT_CHAIN_ALIGN  # can be used for testing
 
 	# TODO: Generate actual signature with our generated attestation certificate!
-	# Computing the HMAC hash for it is quite weird with a combination of HW_ID and SW_ID
-	# None of my devices verify it, so I didn't implement it because I have no way to test it.
-	# If you need this, feel free to ask in the issues and I might be able to give some pointers.
+	# There are different signature schemes that could be implemented (RSASSA-PKCS#1 v1.5
+	# RSASSA-PSS, ECDSA over P-384) but it's not entirely clear yet which chipsets supports/
+	# uses which. The signature does not seem to be checked on devices without secure boot,
+	# so just use a dummy value for now.
 	signature = b'\xff' * (sign.KEY_BITS // 8)
 
 	# Align maximum end address to get address for hash table header, then generate header
