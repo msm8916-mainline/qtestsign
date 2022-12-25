@@ -61,7 +61,7 @@ def _align(i: int, alignment: int) -> int:
 
 
 @dataclass
-class Header:
+class MbnHeader:
 	image_id: int  # Type of image (unused?)
 	version: int  # Header version number
 	flash_addr: int  # Location of image in flash (historical)
@@ -79,7 +79,7 @@ class Header:
 		self.image_id = 0
 		self.version = 3
 		self.flash_addr = 0
-		self.dest_addr = dest_addr + Header.FORMAT.size
+		self.dest_addr = dest_addr + self.FORMAT.size
 		self.total_size = hash_size + signature_size + cert_chain_size
 		self.hash_size = hash_size
 		self.signature_addr = self.dest_addr + hash_size
@@ -89,7 +89,7 @@ class Header:
 
 	@property
 	def size_with_header(self):
-		return Header.FORMAT.size + self.total_size
+		return self.FORMAT.size + self.total_size
 
 	def pack(self, hashes: bytes, signature: bytes, cert_chain: bytes) -> bytes:
 		assert len(hashes) == self.hash_size
@@ -97,7 +97,7 @@ class Header:
 		assert len(cert_chain) == self.cert_chain_size
 
 		# The hash segment data is header/hashes/cert_chain/signature concatenated
-		header = Header.FORMAT.pack(*dataclasses.astuple(self))
+		header = self.FORMAT.pack(*dataclasses.astuple(self))
 		return header + hashes + signature + cert_chain
 
 
@@ -128,7 +128,7 @@ def generate(elff: elf.Elf, sw_id: int):
 
 	# Align maximum end address to get address for hash table header, then generate header
 	hash_addr = _align(max(phdr.p_paddr + phdr.p_memsz for phdr in elff.phdrs), HASH_SEG_ALIGN)
-	hash_header = Header(hash_addr, total_hashes_size, len(signature), len(cert_chain))
+	hash_header = MbnHeader(hash_addr, total_hashes_size, len(signature), len(cert_chain))
 	print(hash_header)
 
 	# Place hash segment at first possible location respecting space for program headers + alignment
