@@ -45,9 +45,9 @@ PHDR_FLAGS_HASH_SEGMENT = 0x2200000  # hash table segment
 EXTRA_PHDRS = 2  # header placeholder + hash segment
 
 # Note: None of the alignments seem to be truly required,
-# so if you want smaller file sizes you can probably reduce this further.
+# this could probably be reduced to get smaller file sizes.
 HASH_SEG_ALIGN = 0x1000
-CERT_CHAIN_ALIGN = 0x800  # or 0x1000?
+CERT_CHAIN_ALIGN = 16
 
 SHA256_SIZE = 32
 SHA256_EMPTY = b'\0' * SHA256_SIZE
