@@ -48,14 +48,19 @@ def _sign_elf(b: bytes, out: Path, version: int, sw_id: int):
 
 
 parser = argparse.ArgumentParser(description="""
-	Sign Qualcomm firmware using test certificates.
-	Note: This works only for devices that have secure boot disabled!
-	Note2: At the moment the tool only generates the absolute minimum to have
-		the firmware accepted by SBL. There is actually no signature generated!
+	"Sign" Qualcomm firmware using a dummy certificate chain.
+
+	NOTE: The image format is only partially implemented. There is actually
+	no signature generated! This works only for devices that have firmware
+	secure boot disabled. Most Qualcomm devices available in production have
+	firmware secure boot permanently enabled (with no way to disable it).
+	They will fail to boot when flashing modified firmware!
 """)
 parser.add_argument('type', choices=FW_SW_ID.keys(), help="Firmware type (for SW_ID)")
 parser.add_argument('elf', type=argparse.FileType('rb'), help="ELF image to sign")
-parser.add_argument('-v', '--version', type=int, choices=[3, 5, 6], default=3, help="MBN header version")
+parser.add_argument('-v', '--version', type=int, choices=[3, 5, 6], default=3,
+					help="MBN header version. Must be set correctly depending on the target chipset. "
+						 "See README for details.")
 parser.add_argument('-o', '--output', type=Path, help="Output file")
 args = parser.parse_args()
 
