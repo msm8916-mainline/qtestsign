@@ -15,8 +15,8 @@ from dataclasses import dataclass
 from io import BytesIO
 from struct import Struct
 
+import cert
 import elf
-import sign
 
 # A typical Qualcomm firmware might have the following program headers:
 #     LOAD off    0x00000800 vaddr 0x86400000 paddr 0x86400000 align 2**11
@@ -219,7 +219,7 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 	total_hashes_size = len(hash_seg.hashes) * digest_size
 
 	# Generate certificate chain with specified sw_id, and pad it to alignment (not sure why)
-	hash_seg.cert_chain = sign.generate_cert_chain(sw_id, hash_seg.FORMAT.size + total_hashes_size)
+	hash_seg.cert_chain = cert.generate_chain(sw_id, hash_seg.FORMAT.size + total_hashes_size)
 	hash_seg.cert_chain = hash_seg.cert_chain.ljust(_align(len(hash_seg.cert_chain), CERT_CHAIN_ALIGN), b'\xff')
 	# hash_seg.cert_chain = b''  # uncomment this to omit the certificate chain in the signed image
 
@@ -228,7 +228,7 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 	# RSASSA-PSS, ECDSA over P-384) but it's not entirely clear yet which chipsets supports/
 	# uses which. The signature does not seem to be checked on devices without secure boot,
 	# so just use a dummy value for now.
-	hash_seg.signature = b'\xff' * (sign.ATT_KEY.key_size // 8)
+	hash_seg.signature = b'\xff' * (cert.ATT_KEY.key_size // 8)
 	# hash_seg.signature = b''  # uncomment this to omit the signature in the signed image
 
 	# Align maximum end address to get address for hash table header, then update header

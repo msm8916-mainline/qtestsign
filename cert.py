@@ -85,7 +85,7 @@ def _begin_cert() -> x509.CertificateBuilder:
 		.not_valid_after(datetime(9999, 12, 31, 23, 59, 59))  # no well-defined expiration date, see RFC5280 4.1.2.5.
 
 
-def generate_cert_chain(sw_id: int, sw_size: int) -> bytes:
+def generate_chain(sw_id: int, sw_size: int) -> bytes:
 	# First, create the root CA
 	root_name = x509.Name([
 		x509.NameAttribute(NameOID.COMMON_NAME, "qtestsign Root CA - NOT SECURE"),
