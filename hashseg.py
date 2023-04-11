@@ -218,8 +218,24 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 			hash_seg.hashes[i] = hash_seg.Hash(phdr.data).digest()
 	total_hashes_size = len(hash_seg.hashes) * digest_size
 
-	# Generate certificate chain with specified sw_id, and pad it to alignment (not sure why)
-	hash_seg.cert_chain = cert.generate_chain(sw_id, hash_seg.FORMAT.size + total_hashes_size)
+	# Generate certificate chain with specified OU fields (for < v6)
+	# on >= v6 this is part of the metadata instead
+	ou_fields = []
+	if version < 6:
+		ou_fields = [
+			# Note: The SW_ID is checked by the firmware on some platforms (even if secure boot
+			# is disabled), so it must match the firmware type being signed. Everything else seems
+			# to be mostly ignored when secure boot is off and is just added here to match the
+			# documentation and better mimic the official firmware.
+			"01 %016X SW_ID" % sw_id,
+			"02 %016X HW_ID" % 0,
+			"03 %016X DEBUG" % 2,  # DISABLED
+			"04 %04X OEM_ID" % 0,
+			"05 %08X SW_SIZE" % (hash_seg.FORMAT.size + total_hashes_size),
+			"06 %04X MODEL_ID" % 0,
+			"07 %04X SHA256" % 1,
+		]
+	hash_seg.cert_chain = cert.generate_chain(ou_fields)
 	hash_seg.cert_chain = hash_seg.cert_chain.ljust(_align(len(hash_seg.cert_chain), CERT_CHAIN_ALIGN), b'\xff')
 	# hash_seg.cert_chain = b''  # uncomment this to omit the certificate chain in the signed image
 

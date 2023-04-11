@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import List
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -85,7 +86,7 @@ def _begin_cert() -> x509.CertificateBuilder:
 		.not_valid_after(datetime(9999, 12, 31, 23, 59, 59))  # no well-defined expiration date, see RFC5280 4.1.2.5.
 
 
-def generate_chain(sw_id: int, sw_size: int) -> bytes:
+def generate_chain(ou_fields: List[str]) -> bytes:
 	# First, create the root CA
 	root_name = x509.Name([
 		x509.NameAttribute(NameOID.COMMON_NAME, "qtestsign Root CA - NOT SECURE"),
@@ -106,17 +107,7 @@ def generate_chain(sw_id: int, sw_size: int) -> bytes:
 	# Now, create the attestation certificate
 	att_name = x509.Name([
 		x509.NameAttribute(NameOID.COMMON_NAME, "qtestsign Attestation CA - NOT SECURE"),
-		# Note: The SW_ID is checked by the firmware on some platforms (even if secure boot
-		# is disabled), so it must match the firmware type being signed. Everything else seems
-		# to be mostly ignored when secure boot is off and is just added here to match the
-		# documentation and better mimic the official firmware.
-		x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "01 %016X SW_ID" % sw_id),
-		x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "02 %016X HW_ID" % 0),
-		x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "03 %016X DEBUG" % 2),  # DISABLED
-		x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "04 %04X OEM_ID" % 0),
-		x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "05 %08X SW_SIZE" % sw_size),
-		x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "06 %04X MODEL_ID" % 0),
-		x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "07 %04X SHA256" % 1),
+		*[x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, ou) for ou in ou_fields],
 	])
 	# only digital_signature=True
 	att_usage = x509.KeyUsage(True, False, False, False, False, False, False, False, False)
