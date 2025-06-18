@@ -58,7 +58,7 @@ parser = argparse.ArgumentParser(description="""
 """)
 parser.add_argument('type', choices=FW_SW_ID.keys(), help="Firmware type (for SW_ID)")
 parser.add_argument('elf', type=argparse.FileType('rb'), help="ELF image to sign")
-parser.add_argument('-v', '--version', type=int, choices=[3, 5, 6], default=3,
+parser.add_argument('-v', '--version', type=int, choices=[3, 5, 6, 7], default=3,
 					help="MBN header version. Must be set correctly depending on the target chipset. "
 						 "See README for details.")
 parser.add_argument('-o', '--output', type=Path, help="Output file")

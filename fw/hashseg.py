@@ -191,10 +191,58 @@ class HashSegmentV6(HashSegmentV5):
 			+ self.signature + self.cert_chain
 
 
+@dataclass
+# Information from https://review.coreboot.org/c/coreboot/+/88240/1/util/qualcomm/mbn_tools.py
+class HashSegmentV7(_HashSegment):
+	version: int = 7  # Header version number
+
+	common_metadata_size: int = 24 # This defaults to 24 (seems like the total size of the last 6 fields)
+	metadata_size_qcom: int = 0  # Size of metadata from Qualcomm
+	metadata_size: int = 0	# Size of metadata from OEM
+	hash_table_size: int = 0
+	signature_size_qcom: int = 0  # Size of signature from Qualcomm
+	cert_chain_size_qcom: int = 0  # Size of certificate chain from Qualcomm
+	signature_size: int = 0  # Size of attestation signature
+	cert_chain_size: int = 0  # Size of certificate chain
+	common_metadata_major_version: int = 0
+	common_metadata_minor_version: int = 0
+	software_id: int = 0 # mandatory
+	secondary_software_id: int = 0
+	hash_table_algorithm: int = 3 # SHA384
+	measurement_register_target: int = 0
+
+	metadata_qcom = b''
+    # doesn't seem required for unfused devices
+	metadata = b''
+	signature_qcom = b''
+	cert_chain_qcom = b''
+
+	FORMAT = Struct('<16L')
+	Hash = hashlib.sha384
+
+	def update(self, dest_addr: int):
+		super().update(dest_addr)
+		self.metadata_size_qcom = len(self.metadata_qcom)
+		self.metadata_size = len(self.metadata)
+		self.total_size += self.common_metadata_size + self.metadata_size_qcom + self.metadata_size
+
+	def check(self):
+		super().check()
+		assert len(self.metadata_qcom) == self.metadata_size_qcom
+		assert len(self.metadata) == self.metadata_size
+
+	def pack(self):
+		return self.pack_header() \
+			+ self.metadata + self.metadata_qcom \
+			+ b''.join(self.hashes) \
+			+ self.signature_qcom + self.cert_chain_qcom \
+			+ self.signature + self.cert_chain
+
 HashSegment = {
 	3: HashSegmentV3,
 	5: HashSegmentV5,
 	6: HashSegmentV6,
+	7: HashSegmentV7,
 }
 
 
@@ -213,6 +261,10 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 	if version >= 6:
 		# TODO: Figure out metadata format and fill this with useful data
 		hash_seg.metadata = b'\0' * METADATA_SIZE
+
+	# Software ID is mandatory for MBN v7
+	if version == 7:
+		hash_seg.software_id = sw_id
 
 	# Generate hash for all existing segments with data
 	digest_size = hash_seg.Hash().digest_size
