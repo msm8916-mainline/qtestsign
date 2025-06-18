@@ -47,8 +47,9 @@ The `-v`/`--version` option must be set correctly depending on the chipset:
 - **`-v3` (default):** MSM8916, MSM8939, MSM8953
   - MSM8909, MDM9607 (they usually accept unsigned ELF images as well)
 - **`-v5`:** MSM8998, SDM845
-- **`-v6`:** SM8150
+- **`-v6`:** SM8150, IPQ9574, IPQ5332
   - In case of problems, try using `-v5` instead. Sometimes both seem to be supported.
+- **`-v7`:** IPQ5424
 
 The list of chipsets is not complete, most other Qualcomm chipsets likely use one of the already supported
 versions above or an older/newer version that is not supported yet by [qtestsign].
@@ -56,7 +57,7 @@ versions above or an older/newer version that is not supported yet by [qtestsign
 ## Supported firmware
 Qualcomm's own signing tool is proprietary and not publicly available. [qtestsign] was created to allow
 building open-source firmware projects without access to Qualcomm's tool, e.g.:
-- `aboot`: [U-Boot] bootloader (for DragonBoard 410c)
+- `aboot`: [U-Boot] bootloader (for DragonBoard 410c, QCA SoCs etc..)
 - `aboot`: [Qualcomm's fork of LK (Little Kernel)], used as bootloader on older platforms
 - `abl`: [Qualcomm's Android Bootloader for UEFI], used on newer platforms
 - `hyp`: [qhypstub], [tfalkstub]
