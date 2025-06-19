@@ -55,7 +55,7 @@ CERT_CHAIN_ALIGN = 16
 
 # According to the v2.0 PDF the metadata is 128 bytes long, but this does not
 # seem to work. All official firmware seems to use 120 bytes instead.
-METADATA_SIZE = 120
+MBN_V6_METADATA_SIZE = 120
 
 
 def _align(i: int, alignment: int) -> int:
@@ -258,9 +258,9 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 
 	hash_seg = HashSegment[version]()
 
-	if version >= 6:
+	if version == 6:
 		# TODO: Figure out metadata format and fill this with useful data
-		hash_seg.metadata = b'\0' * METADATA_SIZE
+		hash_seg.metadata = b'\0' * MBN_V6_METADATA_SIZE
 
 	# Software ID is mandatory for MBN v7
 	if version == 7:
