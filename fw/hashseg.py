@@ -196,19 +196,21 @@ class HashSegmentV6(HashSegmentV5):
 class HashSegmentV7(_HashSegment):
 	version: int = 7  # Header version number
 
-	common_metadata_size: int = 24 # This defaults to 24 (seems like the total size of the last 6 fields)
+	common_metadata_size: int = 24  # Size of "common metadata" below
 	metadata_size_qcom: int = 0  # Size of metadata from Qualcomm
-	metadata_size: int = 0	# Size of metadata from OEM
+	metadata_size: int = 0  # Size of metadata from OEM
 	hash_table_size: int = 0
 	signature_size_qcom: int = 0  # Size of signature from Qualcomm
 	cert_chain_size_qcom: int = 0  # Size of certificate chain from Qualcomm
 	signature_size: int = 0  # Size of attestation signature
 	cert_chain_size: int = 0  # Size of certificate chain
+
+	# Common metadata, placed directly after MBNv7 header
 	common_metadata_major_version: int = 0
 	common_metadata_minor_version: int = 0
-	software_id: int = 0 # mandatory
+	software_id: int = 0  # Type of software image, mandatory
 	secondary_software_id: int = 0
-	hash_table_algorithm: int = 3 # SHA384
+	hash_table_algorithm: int = 3  # SHA384
 	measurement_register_target: int = 0
 
 	metadata_qcom = b''
@@ -224,7 +226,8 @@ class HashSegmentV7(_HashSegment):
 		super().update(dest_addr)
 		self.metadata_size_qcom = len(self.metadata_qcom)
 		self.metadata_size = len(self.metadata)
-		self.total_size += self.common_metadata_size + self.metadata_size_qcom + self.metadata_size
+		# self.common_metadata_size is already included as part of the header
+		self.total_size += self.metadata_size_qcom + self.metadata_size
 
 	def check(self):
 		super().check()
@@ -331,3 +334,4 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 
 	# And finally, assemble the hash segment
 	hash_phdr.data = hash_seg.pack()
+	assert len(hash_phdr.data) == hash_phdr.p_filesz
