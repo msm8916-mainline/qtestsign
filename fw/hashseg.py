@@ -43,8 +43,20 @@ from . import elf
 # the ELF header (including all program headers). It is a placeholder so that
 # each hash covers the data of exactly one program header.
 
-PHDR_FLAGS_HDR_PLACEHOLDER = 0x7000000  # placeholder for hash over ELF header
-PHDR_FLAGS_HASH_SEGMENT = 0x2200000  # hash table segment
+# For definitions of the ELF PHDR flags used by Qualcomm, see:
+# https://github.com/coreboot/coreboot/blob/812d0e2f626dfea7e7deb960a8dc08ff0e026bc1/util/qualcomm/mbn_tools.py#L108-L189
+PHDR_FLAGS_SEGMENT_TYPE_MASK	= 0x07000000
+PHDR_FLAGS_SEGMENT_TYPE_SHIFT	= 0x18
+PHDR_FLAGS_SEGMENT_TYPE_HASH	= (0x2 << PHDR_FLAGS_SEGMENT_TYPE_SHIFT)
+PHDR_FLAGS_SEGMENT_TYPE_HDR	= (0x7 << PHDR_FLAGS_SEGMENT_TYPE_SHIFT)
+
+PDHR_FLAGS_ACCESS_TYPE_MASK	= 0x00E00000
+PHDR_FLAGS_ACCESS_TYPE_SHIFT	= 0x15
+PHDR_FLAGS_ACCESS_TYPE_RO	= (0x1 << PHDR_FLAGS_ACCESS_TYPE_SHIFT)
+
+# Flags we use for placeholder for hash over ELF header and hash segment
+PHDR_FLAGS_HDR_PLACEHOLDER = PHDR_FLAGS_SEGMENT_TYPE_HDR
+PHDR_FLAGS_HASH_SEGMENT = (PHDR_FLAGS_SEGMENT_TYPE_HASH | PHDR_FLAGS_ACCESS_TYPE_RO)
 
 EXTRA_PHDRS = 2  # header placeholder + hash segment
 
@@ -260,8 +272,9 @@ HashSegment = {
 
 def drop(elff: elf.Elf):
 	# Drop existing hash segments
-	elff.phdrs = [phdr for phdr in elff.phdrs if phdr.p_type != 0 or phdr.p_flags not in
-				  [PHDR_FLAGS_HASH_SEGMENT, PHDR_FLAGS_HDR_PLACEHOLDER]]
+	elff.phdrs = [phdr for phdr in elff.phdrs if phdr.p_type != 0
+		      or (phdr.p_flags & PHDR_FLAGS_SEGMENT_TYPE_MASK) not in
+		      [PHDR_FLAGS_SEGMENT_TYPE_HASH, PHDR_FLAGS_SEGMENT_TYPE_HDR]]
 
 
 def generate(elff: elf.Elf, version: int, sw_id: int):
