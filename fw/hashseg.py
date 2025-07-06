@@ -241,7 +241,7 @@ class HashSegmentV7(_HashSegment):
 
 	def pack(self):
 		return self.pack_header() \
-			+ self.metadata + self.metadata_qcom \
+			+ self.metadata_qcom + self.metadata \
 			+ b''.join(self.hashes) \
 			+ self.signature_qcom + self.cert_chain_qcom \
 			+ self.signature + self.cert_chain
