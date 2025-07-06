@@ -33,6 +33,9 @@ FW_SW_ID = {
 	"aop": 0x21,
 	"qup": 0x24,
 	"xbl-config": 0x25,
+	"cdsp-dtb": 0x52,
+	"adsp-dtb": 0x53,
+	"av1": 0x69,
 }
 
 
