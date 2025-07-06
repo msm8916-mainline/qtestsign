@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2023 Stephan Gerhold (GPL-2.0-only)
 # MBN header format adapted from:
 #   - signlk: https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
-#   - coreboot (util/qualcomm/mbn_tools.py)
+#   - coreboot (util/qualcomm/mbn_tools.py, util/cbfstool/platform_fixups.c)
 # Copyright (c) 2016, 2018, The Linux Foundation. All rights reserved. (BSD-3-Clause)
 # See also:
 #   - https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf
@@ -56,6 +56,10 @@ CERT_CHAIN_ALIGN = 16
 # According to the v2.0 PDF the metadata is 128 bytes long, but this does not
 # seem to work. All official firmware seems to use 120 bytes instead.
 MBN_V6_METADATA_SIZE = 120
+
+# See OEM Metadata 2.0 definition in coreboot source code:
+# https://github.com/coreboot/coreboot/blob/812d0e2f626dfea7e7deb960a8dc08ff0e026bc1/util/qualcomm/mbn_tools.py#L506-L691
+MBN_V7_OEM_2_0_METADATA_SIZE = 224
 
 
 def _align(i: int, alignment: int) -> int:
@@ -192,7 +196,8 @@ class HashSegmentV6(HashSegmentV5):
 
 
 @dataclass
-# Information from https://review.coreboot.org/c/coreboot/+/88240/1/util/qualcomm/mbn_tools.py
+# Information from MBNv7 definition in Coreboot source code:
+# https://github.com/coreboot/coreboot/blob/812d0e2f626dfea7e7deb960a8dc08ff0e026bc1/util/qualcomm/mbn_tools.py#L506-L691
 class HashSegmentV7(_HashSegment):
 	version: int = 7  # Header version number
 
@@ -214,7 +219,6 @@ class HashSegmentV7(_HashSegment):
 	measurement_register_target: int = 0
 
 	metadata_qcom = b''
-    # doesn't seem required for unfused devices
 	metadata = b''
 	signature_qcom = b''
 	cert_chain_qcom = b''
@@ -273,6 +277,9 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 	# Software ID is mandatory for MBN v7
 	if version == 7:
 		hash_seg.software_id = sw_id
+		# The format is documented in Coreboot util/qualcomm/mbn_tools.py
+		# (see class Boot_Hdr), but for simplicity we just keep this empty.
+		hash_seg.metadata = b'\0' * MBN_V7_OEM_2_0_METADATA_SIZE
 
 	# Generate hash for all existing segments with data
 	digest_size = hash_seg.Hash().digest_size
