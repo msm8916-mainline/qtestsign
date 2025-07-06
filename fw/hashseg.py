@@ -226,13 +226,18 @@ class HashSegmentV7(_HashSegment):
 		super().update(dest_addr)
 		self.metadata_size_qcom = len(self.metadata_qcom)
 		self.metadata_size = len(self.metadata)
+		self.signature_size_qcom = len(self.signature_qcom)
+		self.cert_chain_size_qcom = len(self.cert_chain_qcom)
 		# self.common_metadata_size is already included as part of the header
 		self.total_size += self.metadata_size_qcom + self.metadata_size
+		self.total_size += self.signature_size_qcom + self.cert_chain_size_qcom
 
 	def check(self):
 		super().check()
 		assert len(self.metadata_qcom) == self.metadata_size_qcom
 		assert len(self.metadata) == self.metadata_size
+		assert len(self.signature_qcom) == self.signature_size_qcom
+		assert len(self.cert_chain_qcom) == self.cert_chain_size_qcom
 
 	def pack(self):
 		return self.pack_header() \
