@@ -199,7 +199,7 @@ class HashSegmentV7(_HashSegment):
 	common_metadata_size: int = 24  # Size of "common metadata" below
 	metadata_size_qcom: int = 0  # Size of metadata from Qualcomm
 	metadata_size: int = 0  # Size of metadata from OEM
-	hash_table_size: int = 0
+	hash_size: int = 0  # Size of hashes for all program segments
 	signature_size_qcom: int = 0  # Size of signature from Qualcomm
 	cert_chain_size_qcom: int = 0  # Size of certificate chain from Qualcomm
 	signature_size: int = 0  # Size of attestation signature
