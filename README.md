@@ -83,7 +83,10 @@ from Qualcomm's whitepaper _"Secure Boot and Image Authentication"_ (both
 [v1.0](https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v1-0.pdf) and
 [v2.0](https://www.qualcomm.com/media/documents/files/secure-boot-and-image-authentication-technical-overview-v2-0.pdf)).
 Some implementation details (e.g. the exact MBN header format) are adapted from [signlk] and [coreboot]
-(`util/qualcomm/mbn_tools.py`) available under a `BSD-3-Clause` license.
+(`util/qualcomm/mbn_tools.py`, `util/cbfstool/platform_fixups.c`) available under a `BSD-3-Clause` license.
+
+For QCA chipsets, Qualcomm maintains a similar set of tools at https://git.codelinaro.org/clo/qsdk/oss/system/tools/meta
+available under a `ISC` license.
 
 [qtestsign]: https://github.com/msm8916-mainline/qtestsign
 [cryptography]: https://cryptography.io
