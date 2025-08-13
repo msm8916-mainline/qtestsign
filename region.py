@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from fw.elf import Elf, Phdr, align
+from mbn.elf import Elf, Phdr, align
 
 # For definitions of the ELF PHDR flags used by Qualcomm, see:
 # https://github.com/coreboot/coreboot/blob/812d0e2f626dfea7e7deb960a8dc08ff0e026bc1/util/qualcomm/mbn_tools.py#L108-L189

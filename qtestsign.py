@@ -6,8 +6,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from fw import hashseg
-from fw.elf import Elf
+from mbn import hashseg
+from mbn.elf import Elf
 
 # Taken from the certificates (DER format) in official firmwares
 FW_SW_ID = {

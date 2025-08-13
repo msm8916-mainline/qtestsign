@@ -6,8 +6,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from fw import hashseg
-from fw.elf import Elf
+from mbn import hashseg
+from mbn.elf import Elf
 
 
 def _strip_elf(elf: Elf, out: Path):

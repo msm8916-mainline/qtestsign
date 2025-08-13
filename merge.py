@@ -7,7 +7,7 @@ import argparse
 from pathlib import Path
 from typing import List
 
-from fw.elf import Elf
+from mbn.elf import Elf
 
 
 def _merge_elfs(elfs: List[Elf], out: Path):
