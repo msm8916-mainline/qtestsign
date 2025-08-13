@@ -74,11 +74,6 @@ MBN_V6_METADATA_SIZE = 120
 MBN_V7_OEM_2_0_METADATA_SIZE = 224
 
 
-def _align(i: int, alignment: int) -> int:
-	mask = max(alignment - 1, 0)
-	return (i + mask) & ~mask
-
-
 @dataclass
 class _HashSegment:
 	image_id: int = 0  # Type of image (unused?)
@@ -272,7 +267,7 @@ HashSegment = {
 
 def drop(elff: elf.Elf):
 	# Drop existing hash segments
-	elff.phdrs = [phdr for phdr in elff.phdrs if phdr.p_type != 0
+	elff.phdrs = [phdr for phdr in elff.phdrs if phdr.p_type != elf.Phdr.PT_NULL
 		      or (phdr.p_flags & PHDR_FLAGS_SEGMENT_TYPE_MASK) not in
 		      [PHDR_FLAGS_SEGMENT_TYPE_HASH, PHDR_FLAGS_SEGMENT_TYPE_HDR]]
 
@@ -320,7 +315,7 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 			"07 %04X SHA256" % 1,
 		]
 	hash_seg.cert_chain = cert.generate_chain(ou_fields)
-	hash_seg.cert_chain = hash_seg.cert_chain.ljust(_align(len(hash_seg.cert_chain), CERT_CHAIN_ALIGN), b'\xff')
+	hash_seg.cert_chain = hash_seg.cert_chain.ljust(elf.align(len(hash_seg.cert_chain), CERT_CHAIN_ALIGN), b'\xff')
 	# hash_seg.cert_chain = b''  # uncomment this to omit the certificate chain in the signed image
 
 	# TODO: Generate actual signature with our generated attestation certificate!
@@ -332,18 +327,18 @@ def generate(elff: elf.Elf, version: int, sw_id: int):
 	# hash_seg.signature = b''  # uncomment this to omit the signature in the signed image
 
 	# Align maximum end address to get address for hash table header, then update header
-	hash_addr = _align(max(phdr.p_paddr + phdr.p_memsz for phdr in elff.phdrs), HASH_SEG_ALIGN)
+	hash_addr = elf.align(max(phdr.p_paddr + phdr.p_memsz for phdr in elff.phdrs), HASH_SEG_ALIGN)
 	hash_seg.update(hash_addr)
 	print(hash_seg)
 
 	# Insert new hash NULL segment
-	hash_phdr = elf.Phdr(0, HASH_SEG_ALIGN, hash_addr, hash_addr, hash_seg.size_with_header,
-						 _align(hash_seg.size_with_header, HASH_SEG_ALIGN),
+	hash_phdr = elf.Phdr(elf.Phdr.PT_NULL, HASH_SEG_ALIGN, hash_addr, hash_addr, hash_seg.size_with_header,
+						 elf.align(hash_seg.size_with_header, HASH_SEG_ALIGN),
 						 PHDR_FLAGS_HASH_SEGMENT, HASH_SEG_ALIGN)
 	elff.phdrs.insert(0, hash_phdr)
 
 	# Insert new ELF header placeholder program header
-	hdr_hash_phdr = elf.Phdr(0, 0, 0, 0, 0, 0, PHDR_FLAGS_HDR_PLACEHOLDER, 0)
+	hdr_hash_phdr = elf.Phdr(elf.Phdr.PT_NULL, 0, 0, 0, 0, 0, PHDR_FLAGS_HDR_PLACEHOLDER, 0)
 	elff.phdrs.insert(0, hdr_hash_phdr)
 
 	# Now determine size of ELF header (including program headers)

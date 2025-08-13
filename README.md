@@ -75,6 +75,12 @@ is stripped and replaced with new hashes.
 
     **Note:** The resulting image is not automatically signed, this must be done separately.
 
+ - `patchxbl.py`: Replace the XBL core segment inside a XBL image (`xbl.elf`). This can be used
+   to load U-Boot instead of edk2 on some platforms. See the following blog post for details:
+   [Initial U-Boot release for Qualcomm platforms]
+
+ - `region.py`: Show the reserved memory region required for an ELF image.
+
  - `strip.py`: Remove section header table and drop hash segment from the ELF image.
 
 ## License
@@ -101,3 +107,4 @@ available under a `ISC` license.
 [GNU General Public License, version 2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 [signlk]: https://git.linaro.org/landing-teams/working/qualcomm/signlk.git
 [coreboot]: https://coreboot.org
+[Initial U-Boot release for Qualcomm platforms]: https://www.linaro.org/blog/initial-u-boot-release-for-qualcomm-platforms/

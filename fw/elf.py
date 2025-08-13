@@ -94,6 +94,9 @@ class Phdr:
 	FORMAT32 = Struct('<8L')
 	FORMAT64 = Struct('<LL6Q')
 
+	PT_NULL = 0
+	PT_LOAD = 1
+
 	@staticmethod
 	def parse(b: bytes, offset: int, ei_class: int) -> Phdr:
 		if ei_class == Ehdr.CLASS32:
@@ -130,7 +133,7 @@ def _pad(f: BinaryIO, offset: int, pos: int) -> int:
 	return offset
 
 
-def _align(i: int, alignment: int) -> int:
+def align(i: int, alignment: int) -> int:
 	mask = max(alignment - 1, 0)
 	return (i + mask) & ~mask
 
@@ -168,7 +171,7 @@ class Elf:
 		pos = self.total_header_size()
 		for phdr in sorted(self.phdrs, key=lambda phdr: phdr.p_offset):
 			if phdr.p_offset and phdr.p_filesz:
-				phdr.p_offset = _align(pos, phdr.p_align)
+				phdr.p_offset = align(pos, phdr.p_align)
 				pos = phdr.p_offset + phdr.p_filesz
 
 		# Ensure program header count is correct
