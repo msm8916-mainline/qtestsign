@@ -22,8 +22,10 @@ On many distributions this will likely be already installed by default (but perh
 Alternatively you can install it with pip:
 
 ```
-$ pip install -r requirements.txt
+$ pip install .
 ```
+
+If you are developing or modifying the tool, use `pip install -e .` instead so your code changes take effect immediately.
 
 Then, just use `./qtestsign.py --help` to figure out how the tool works. You need to specify the firmware type
 and the ELF image to sign, e.g. for [U-Boot]:

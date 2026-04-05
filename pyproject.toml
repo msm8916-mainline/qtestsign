@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qtestsign"
+version = "0.0"
+requires-python = ">=3.7"
+dependencies = [
+  "cryptography>=3.1",
+]
+
+[tool.setuptools.packages.find]
+namespaces = true
+include = ["mbn"]
+
+[tool.setuptools]
+script-files = ["qtestsign.py", "merge.py", "patchxbl.py", "strip.py", "region.py"]
